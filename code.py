@@ -8,6 +8,14 @@ General Notes
 * When connecting the keyboard to a computer via USB, USB will be enabled 
   automatically. When both USB and Bluetooth are enabled, USB will be used.
 
+How to Upgrade Firmware
+-----------------------
+* With USB connected, press ``Fn+b``
+* When the bootloader is running, a USB drive named M60Keyboard will appear in 
+  your computer. Download the latest .uf2 firmware, drag-n-drop the firmware 
+  into the USB drive, and then wait until a new USB drive named CIRCUITPY 
+  appears.
+
 Special Keycodes
 ----------------
 NO              Do nothing
@@ -342,10 +350,34 @@ keyboard.keymap = (
 
 
 def macro_handler(dev, n, is_down):
+    """
+    Parameters
+    ----------
+    dev : Keyboard Device
+        Useful methods:
+            ``dev.send(GUI, R)``
+            ``dev.send_text('calc\n')``
+            ``dev.backlight.pixel(i, r, g, b)``
+            ``dev.backlight.set_brightness(val)  # sets the global brightness of all LEDs``
+            ``dev.backlight.update()  # push changes``
+    n : int
+        Macro identifier pressed
+    is_down : bool
+        If ``True``, then the button is pressed. If ``False``, the button is released.
+    """
     if is_down:
         dev.send_text('You pressed macro #{}\n'.format(n))
     else:
         dev.send_text('You released macro #{}\n'.format(n))
+
+
+# ESC(0)    1(1)   2(2)   3(3)   4(4)   5(5)   6(6)   7(7)   8(8)   9(9)   0(10)  -(11)  =(12)  BACKSPACE(13)
+# TAB(27)   Q(26)  W(25)  E(24)  R(23)  T(22)  Y(21)  U(20)  I(19)  O(18)  P(17)  [(16)  ](15)   \(14)
+# CAPS(28)  A(29)  S(30)  D(31)  F(32)  G(33)  H(34)  J(35)  K(36)  L(37)  ;(38)  "(39)      ENTER(40)
+#LSHIFT(52) Z(51)  X(50)  C(49)  V(48)  B(47)  N(46)  M(45)  ,(44)  .(43)  /(42)            RSHIFT(41)
+# LCTRL(53)  LGUI(54)  LALT(55)               SPACE(56)          RALT(57)  MENU(58)  Fn(59)  RCTRL(60)
+
+#No.61 and No.62 are under the space key. No.63 is at the back of keyboard.
 
 def pairs_handler(dev, n):
     dev.send_text('You just triggered pair keys #{}\n'.format(n))
