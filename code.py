@@ -286,7 +286,8 @@ Normal Keys
     GUI
 """
 
-from PYKB import *
+#from PYKB import *
+from keyboard import *
 
 keyboard = Keyboard()
 
