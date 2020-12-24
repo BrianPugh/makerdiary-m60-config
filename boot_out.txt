@@ -1,0 +1,1 @@
+Adafruit CircuitPython 6.0.0-alpha.1-110-g121d78ec9 on 2020-08-27; Makerdiary M60 Keyboard with nRF52840
