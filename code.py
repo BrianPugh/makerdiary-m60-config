@@ -21,6 +21,25 @@ BOOTLOADER      Enter the bootloader of the keyboard
 SUSPEND         Suspend. To wake up keyboard, just press any key
 SHUTDOWN        Shutdown. Use ON/OFF button to power on the keyboard
 
+Layer & Modifier
+----------------
+
+`MODS_KEY(mods, key)` sends one or more modifier(s) + a normal key. `MODS()` is used to wrap modifiers.
+`MODS_KEY(MODS(LCTRL), C)`, `MODS_KEY(MODS(LCTRL, LSHIFT), C)`, `MODS_KEY(MODS(LCTRL, LSHIFT, LALT), C)`
+* `LAYER_TOGGLE(n)` toggles layer `n`
+* `MACRO(n)` creates macro `n`
+
+TAP-Key
+^^^^^^^
+A `TAP-Key` has 2 modes - tap (press and release quickly) and hold (long press)
+
+* `LAYER_TAP(n, key)` tap - outputs `key`, hold - turns on layer n momentary
+* `LAYER_TAP_TOGGLE(n)` tap - toggles layer n, hold - turns on layer n momentary
+* `LAYER_MODS(n, mods)` tap - outputs specified modifier(s), hold - turns on 
+  layer n momentary `LAYER_MODS(1, MODS(LCTRL))`, `LAYER_MODS(1, MODS(LCTRL, LSHIFT))`
+* `MODS_TAP(mods, key)` tap - outputs `key`, hold - outputs specified modifier(s)
+  `MODS_TAP(MODS(LCTRL), ';')`, `MODS_TAP(MODS(LCTRL, LALT), LEFT)`
+
 App and Media
 -------------
 .. code-block::
