@@ -56,10 +56,13 @@ def battery_level():
     elif i < 0:
         i = 0
     print("Battery level: %d" % BATTERY_VOLTAGE[i]);
-    print("Charging?: %s" % ("YES" if not charger_in.value else "NO"))
+    print("Charging?: %s" % ("YES" if battery_charge() else "NO"))
     print("Voltage: %d" % voltage)
     print("")
     return BATTERY_VOLTAGE[i]
+
+def battery_charge():
+    return not charger_in.value
 
 
 leds_x = bytearray((

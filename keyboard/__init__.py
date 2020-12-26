@@ -13,7 +13,7 @@ from adafruit_ble.services.standard import BatteryService
 from adafruit_ble.services.standard.hid import HIDService
 
 from .hid import HID
-from .model import Matrix, COORDS, Backlight, battery_level, key_name
+from .model import Matrix, COORDS, Backlight, battery_level, battery_charge, key_name
 from .action_code import *
 from .util import usb_is_connected, do_nothing
 
@@ -95,7 +95,7 @@ class Keyboard:
         ble_hid = HIDService()
         self.battery = BatteryService()
         self.battery.level = battery_level()
-        self.battery_update_time = time.time() + 360
+        self.battery_update_time = time.time() + 10
         self.advertisement = ProvideServicesAdvertisement(ble_hid, self.battery)
         self.advertisement.appearance = 961
         self.ble = adafruit_ble.BLERadio()
@@ -139,7 +139,8 @@ class Keyboard:
 
         # update battery level
         if time.time() > self.battery_update_time:
-            self.battery_update_time = time.time() + 3600
+            #self.battery_update_time = time.time() + 3600
+            self.battery_update_time = time.time() + 10
             self.battery.level = battery_level()
 
     def setup(self):

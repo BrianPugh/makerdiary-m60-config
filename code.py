@@ -1,5 +1,6 @@
 #from PYKB import *
 from keyboard import *
+from time import sleep
 
 MACRO_BATT = 1
 
@@ -42,6 +43,30 @@ keyboard.keymap = (
 )
 
 
+def copy_buf(src, dst):
+    for i, val in enumerate(src):
+        dst[i] = val
+
+
+_backlight_cache = []
+def backlight_push(dev):
+    """ Cache current backlight status
+    """
+
+    buf_len = len(dev.backlight.dev._buffer)
+    _backlight_cache.append(bytearray(buf_len))
+    copy_buf(dev.backlight.dev._buffer, _backlight_cache[-1])
+
+
+def backlight_pop(dev):
+    """ Restore previously cached backlight status
+    """
+
+    cache = _backlight_cache.pop()
+    copy_buf(cache, dev.backlight.dev._buffer)
+    keyboard.backlight.update()
+
+
 def macro_handler(dev, n, is_down):
     """
     Parameters
@@ -61,13 +86,25 @@ def macro_handler(dev, n, is_down):
 
     if n == MACRO_BATT:
         if is_down:
-            dev.send_text('You pressed macro #{}\n'.format(n))
+            backlight_push(dev)
+            is_charging = battery_charge()
+            level = int(round(battery_level() / 7.14))
+            for i in range(61):
+                keyboard.backlight.pixel(i, 0, 0, 0)
+            keyboard.backlight.set_brightness(200)
+            keyboard.backlight.update()
+            for i in range(level):
+                if i == 0 and is_charging:
+                    keyboard.backlight.pixel(i, 255, 0, 0)
+                else:
+                    keyboard.backlight.pixel(i, 0, 255, 0)
+
+                if i != level - 1:
+                    sleep(0.03)
+
+                keyboard.backlight.update()
         else:
-            dev.send_text('You pressed macro #{}\n'.format(n))
-    #if is_down:
-    #    dev.send_text('You pressed macro #{}\n'.format(n))
-    #else:
-    #    dev.send_text('You released macro #{}\n'.format(n))
+            backlight_pop(dev)
 
 
 # ESC(0)    1(1)   2(2)   3(3)   4(4)   5(5)   6(6)   7(7)   8(8)   9(9)   0(10)  -(11)  =(12)  BACKSPACE(13)
@@ -91,10 +128,10 @@ keyboard.pairs = [{35, 36}, {20, 19}]
 keyboard.verbose = False
 
 #keyboard.backlight.pixel(56, 0xFF, 0x1F, 0x00)
-#for i in range(61):
-#    keyboard.backlight.pixel(i, 0xFF, 0x1F, 0x00)
-##keyboard.backlight.set_brightness(30)
-#keyboard.backlight.set_brightness(200)
-#keyboard.backlight.update()
+for i in range(61):
+    keyboard.backlight.pixel(i, 0xFF, 0x1F, 0x00)
+#keyboard.backlight.set_brightness(30)
+keyboard.backlight.set_brightness(200)
+keyboard.backlight.update()
 
 keyboard.run()
