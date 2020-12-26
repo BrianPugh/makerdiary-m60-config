@@ -1,8 +1,10 @@
 #from PYKB import *
+import sys
 from keyboard import *
 from time import sleep
 
 MACRO_BATT = 1
+MACRO_REPL = 2
 
 keyboard = Keyboard()
 
@@ -26,7 +28,7 @@ keyboard.keymap = (
     # layer 1
     (
         '`',  F1,      F2,      F3,   F4,   F5,   F6,   F7,    F8,    F9,    F10,  F11, F12, DEL,
-        ___, ___,     ___,     ___, BOOT,  ___,  ___, PGUP,    UP,  PGDN, PRTSCN,  ___, ___, ___,
+        ___, MACRO(MACRO_REPL),     ___,     ___, BOOT,  ___,  ___, PGUP,    UP,  PGDN, PRTSCN,  ___, ___, ___,
         ___, ___,   VOLDN,   VOLUP, MUTE, ___, HOME, LEFT,  DOWN, RIGHT, INSERT,  ___,      ___,
         ___, ___, BRGHTDN, BRGHTUP, ___,  MACRO(MACRO_BATT),  END,  ___,   ___,   ___,    ___, ___,
         ___, ___,   ___,                   ___,                     ___,   ___,   ___,      ___
@@ -105,6 +107,8 @@ def macro_handler(dev, n, is_down):
                 keyboard.backlight.update()
         else:
             backlight_pop(dev)
+    elif n == MACRO_REPL:
+        sys.exit()
 
 
 # ESC(0)    1(1)   2(2)   3(3)   4(4)   5(5)   6(6)   7(7)   8(8)   9(9)   0(10)  -(11)  =(12)  BACKSPACE(13)
