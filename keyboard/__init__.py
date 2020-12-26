@@ -95,13 +95,16 @@ class Keyboard:
         ble_hid = HIDService()
         self.battery = BatteryService()
         self.battery.level = battery_level()
-        self.battery_update_time = time.time() + 10
+        self.battery_update_time = time.time() + 3600
         self.advertisement = ProvideServicesAdvertisement(ble_hid, self.battery)
         self.advertisement.appearance = 961
         self.ble = adafruit_ble.BLERadio()
         self.set_bt_id(self.ble_id)
         self.ble_hid = HID(ble_hid.devices)
         self.usb_hid = HID(usb_hid.devices)
+
+        self.backlight_timeout = time.time()
+        self.backlight_timeout_period = 60
 
     def on_device_changed(self, name):
         print("change to {}".format(name))
@@ -120,6 +123,11 @@ class Keyboard:
                 self.backlight.set_bt_led(None)
             elif time.time() > self.adv_timeout:
                 self.stop_advertising()
+
+        if time.time() > self.backlight_timeout + self.backlight_timeout_period:
+            self.backlight.enabled = False
+            self.backlight.off()
+            self.backlight_timeout = time.time()
 
         if usb_is_connected():
             if self.usb_status == 0:
@@ -423,6 +431,12 @@ class Keyboard:
             t = 20 if self.backlight.check() or mouse_action else 1000
             n = matrix.wait(t)
             self.check()
+
+            if n > 0:
+                # Update the backlight
+                self.backlight_timeout = time.time()
+                self.backlight.enabled = True
+                self.backlight.set_mode(self.backlight.mode)
 
             if self.pair_keys:
                 # detecting pair keys

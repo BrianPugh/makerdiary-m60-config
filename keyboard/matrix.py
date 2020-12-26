@@ -95,7 +95,12 @@ class Matrix:
         return self.length
 
     def wait(self, timeout=1000):
-        """Wait for a new key event or timeout"""
+        """Wait for a new key event or timeout
+        Parameters
+        ----------
+        timeout : int
+            Timeout in milliseconds
+        """
         last = self.length
         if timeout:
             end_time = time.monotonic_ns() + timeout * 1000000

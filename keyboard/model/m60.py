@@ -159,7 +159,6 @@ class Backlight:
         self._bt_led = None
         self.pixel = self.dev.pixel
 
-        self.enabled = True
         self.hsv = [0, 255, 255]
         self.keys = {}
         self.n = 0
@@ -362,6 +361,13 @@ class Backlight:
         self.dev.update()
 
     def check(self):
+        """
+        Returns
+        -------
+        bool
+            True if animation (decreases matrix polling timeout, increasing battery use)
+            False if static (saves battery)
+        """
         if self.enabled and self.dynamic:
             return self.mode_function()
         return False
