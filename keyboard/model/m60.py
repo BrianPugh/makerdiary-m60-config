@@ -1,4 +1,5 @@
 import analogio
+import digitalio
 import microcontroller
 from .is32fl3733 import IS31FL3733
 
@@ -42,6 +43,8 @@ BATTERY_VOLTAGE = (
 )
 
 battery_in = analogio.AnalogIn(microcontroller.pin.P0_02)
+charger_in = digitalio.DigitalInOut(microcontroller.pin.P0_03)  # NOTE: low/False=charging, high/True=not_charging
+charger_in.pull = digitalio.Pull.UP
 
 
 def battery_level():
@@ -52,6 +55,10 @@ def battery_level():
         i = len(BATTERY_VOLTAGE) - 1
     elif i < 0:
         i = 0
+    print("Battery level: %d" % BATTERY_VOLTAGE[i]);
+    print("Charging?: %s" % ("YES" if not charger_in.value else "NO"))
+    print("Voltage: %d" % voltage)
+    print("")
     return BATTERY_VOLTAGE[i]
 
 
