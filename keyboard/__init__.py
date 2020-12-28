@@ -134,9 +134,9 @@ class Keyboard:
 
         self.uid = microcontroller.cpu.uid * 2
         self.usb_status = 0
-        self.tap_delay = 500
-        self.fast_type_thresh = 200
-        self.pair_delay = 10
+        self.tap_delay = const(500)
+        self.fast_type_thresh = const(200)
+        self.pair_delay = const(10)
         self.adv_timeout = None
 
         size = 4 + self.matrix.keys
