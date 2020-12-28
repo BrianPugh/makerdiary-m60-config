@@ -23,8 +23,34 @@ from .model import Matrix, COORDS, Backlight, battery_level, battery_charge, key
 from .action_code import *
 from .util import usb_is_connected, do_nothing
 
+_ENABLE_BACKLIGHT_TIMEOUT = const(1)
 _ENABLE_LIGHT_SENSOR = const(0)
 _ENABLE_MCP230XX = const(0)
+
+class LightSensor(VEML7700):
+
+    def __init__(self, i2c_bus, address=0x10):
+        super().__init__(i2c_bus, address=address)
+        self.off()
+
+    def on(self):
+        self.light_shutdown = False
+
+    def off(self):
+        self.light_shutdown = True
+
+    def __enter__(self):
+        self.on()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.off()
+
+    @property
+    def lux(self):
+        self.on()
+        lux = super().lux
+        self.off()
+        return lux
 
 
 def reset_into_bootloader():
@@ -74,6 +100,8 @@ class Device:
 
 class Keyboard:
     def __init__(self, keymap=(), verbose=True):
+        t = time.time()
+
         self.keymap = keymap
         self.verbose = verbose
         self.profiles = {}
@@ -83,12 +111,26 @@ class Keyboard:
         self.macro_handler = do_nothing
         self.layer_mask = 1
         self.matrix = Matrix()
+
         self.i2c = busio.I2C(board.SCL, board.SDA, frequency=400000)
         self.i2c.try_lock()
+
         self.backlight = Backlight(dev=self.i2c)
 
+        if _ENABLE_BACKLIGHT_TIMEOUT:
+            self.backlight_timeout = t
+            self.backlight_timeout_period = const(60)
+
         self.mcp = MCP230xx(self.i2c) if _ENABLE_MCP230XX else None
-        self.light_sensor = VEML7700(self.i2c) if _ENABLE_LIGHT_SENSOR else None
+
+        if _ENABLE_LIGHT_SENSOR:
+            self.lux = 0
+            self.light_sensor = VEML7700(self.i2c)
+            # light sensor is behind dark resin, so use max gain
+            self.light_sensor.light_gain = VEML7700.ALS_GAIN_2
+            self.light_sensor_time = t
+            self.light_sensor_period = const(1)
+            # TODO: read here
 
         self.uid = microcontroller.cpu.uid * 2
         self.usb_status = 0
@@ -110,7 +152,7 @@ class Keyboard:
         ble_hid = HIDService()
         self.battery = BatteryService()
         self.battery.level = battery_level()
-        self.battery_update_time = time.time() + 3600
+        self.battery_update_time = t + 3600
         self.advertisement = ProvideServicesAdvertisement(ble_hid, self.battery)
         self.advertisement.appearance = 961
         self.ble = adafruit_ble.BLERadio()
@@ -118,8 +160,49 @@ class Keyboard:
         self.ble_hid = HID(ble_hid.devices)
         self.usb_hid = HID(usb_hid.devices)
 
-        self.backlight_timeout = time.time()
-        self.backlight_timeout_period = 60
+    def _check_light_sensor(self, t):
+        """ Updates ``self.lux`` every once in a while.
+        """
+        if not _ENABLE_LIGHT_SENSOR:
+            return
+
+        if _ENABLE_BACKLIGHT_TIMEOUT:
+            if t < self.backlight_timeout + self.backlight_timeout_period:
+                # backlight is off due to inactivity, don't read
+                return
+
+        if t < self.light_sensor_time + self.light_sensor_period:
+            return
+
+        self.lux = self.light_sensor.lux
+
+    def _check_backlight_timeout(self, t):
+        """ Turns off backlight if keyboard hasn't had an input in a while.
+        """
+        if not _ENABLE_BACKLIGHT_TIMEOUT:
+            return
+
+        if t < self.backlight_timeout + self.backlight_timeout_period:
+            return
+
+        self._backlight_off()
+        self.backlight_timeout = t
+
+    def _backlight_off(self):
+        if not self.backlight.enabled:
+            return
+        self.backlight.enabled = False
+        self.backlight.off()
+
+    def _backlight_on(self):
+        if self.backlight.enabled:
+            # Already on, no need to send I2C commands
+            return
+        if _ENABLE_LIGHT_SENSOR and self.lux > 1000:  # TODO: fine tune this threshold
+            # Don't turn on lights in bright environement
+            return
+        self.backlight.enabled = True
+        self.backlight.set_mode(self.backlight.mode)
 
     def on_device_changed(self, name):
         print("change to {}".format(name))
@@ -137,17 +220,15 @@ class Keyboard:
 
         t = time.time()
 
+        self._check_light_sensor(t)
+        self._check_backlight_timeout(t)
+
         if self.adv_timeout:
             if self.ble.connected:
                 self.adv_timeout = 0
                 self.backlight.set_bt_led(None)
             elif t > self.adv_timeout:
                 self.stop_advertising()
-
-        if t > self.backlight_timeout + self.backlight_timeout_period:
-            self.backlight.enabled = False
-            self.backlight.off()
-            self.backlight_timeout = t
 
         if usb_is_connected():
             if self.usb_status == 0:
@@ -446,16 +527,16 @@ class Keyboard:
         last_time = 0
         mouse_action = 0
         mouse_time = 0
+
         while True:
             t = 20 if self.backlight.check() or mouse_action else 1000
             n = matrix.wait(t)
             self.check()
 
-            if n > 0:
+            if _ENABLE_BACKLIGHT_TIMEOUT and n > 0:
                 # Key was pressed, update the backlight timer
                 self.backlight_timeout = time.time()
-                self.backlight.enabled = True
-                self.backlight.set_mode(self.backlight.mode)
+                self._backlight_on()
 
             if self.pair_keys:
                 # detecting pair keys
