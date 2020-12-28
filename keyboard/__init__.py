@@ -132,7 +132,11 @@ class Keyboard:
         self.layer_mask = 1
 
     def check(self):
+        """ Time and other non-key event-based handlers
+        """
+
         t = time.time()
+
         if self.adv_timeout:
             if self.ble.connected:
                 self.adv_timeout = 0
@@ -448,7 +452,7 @@ class Keyboard:
             self.check()
 
             if n > 0:
-                # Update the backlight
+                # Key was pressed, update the backlight timer
                 self.backlight_timeout = time.time()
                 self.backlight.enabled = True
                 self.backlight.set_mode(self.backlight.mode)
