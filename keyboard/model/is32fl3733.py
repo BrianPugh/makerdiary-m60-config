@@ -5,7 +5,7 @@ import microcontroller
 
 
 class IS31FL3733:
-    def __init__(self, address=0x50):
+    def __init__(self, address=0x50, dev=None):
         self.address = address
         self._page = None
         self._buffer = bytearray(12 * 16 + 1)
@@ -17,15 +17,13 @@ class IS31FL3733:
         self.power.direction = digitalio.Direction.OUTPUT
         self.power.value = 1
 
-        # self.i2c = board.I2C()
-        self.i2c = busio.I2C(board.SCL, board.SDA, frequency=400000)
+        if dev is None:
+            dev = busio.I2C(board.SCL, board.SDA, frequency=400000)
+        self.i2c = dev
         self.i2c.try_lock()
-        # print(self.i2c.scan())
 
         self.reset()
         self.setup()
-        # print(self.open_pixels())
-        # print(self.short_pixels())
 
         self.power.value = 0
 
@@ -148,9 +146,7 @@ class IS31FL3733:
         self.page(2)
         row = i >> 4  # i // 16
         col = i & 15  # i % 16
-        self.write(row * 48 + 32 + col, mode)  # blue
-        # self.write(row * 48 + col, mode)         # green
-        # self.write(row * 48 + 16 + col, mode)    # red
+        self.write(row * 48 + 32 + col, mode)
         if mode:
             self.mode_mask |= 1 << i
         else:

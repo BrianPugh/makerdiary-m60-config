@@ -153,8 +153,8 @@ def wheel2(h, v):
 
 
 class Backlight:
-    def __init__(self):
-        self.dev = IS31FL3733()
+    def __init__(self, dev=None):
+        self.dev = IS31FL3733(dev=dev)
         self._hid_leds = 0
         self._bt_led = None
         self.pixel = self.dev.pixel

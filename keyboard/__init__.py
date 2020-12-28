@@ -5,6 +5,8 @@ import struct
 import _bleio
 import microcontroller
 import usb_hid
+import board
+import busio
 
 import adafruit_ble
 from adafruit_ble.advertising import Advertisement
@@ -74,7 +76,9 @@ class Keyboard:
         self.macro_handler = do_nothing
         self.layer_mask = 1
         self.matrix = Matrix()
-        self.backlight = Backlight()
+        self.i2c = busio.I2C(board.SCL, board.SDA, frequency=400000)
+        self.i2c.try_lock()
+        self.backlight = Backlight(dev=self.i2c)
         self.uid = microcontroller.cpu.uid * 2
         self.usb_status = 0
         self.tap_delay = 500
