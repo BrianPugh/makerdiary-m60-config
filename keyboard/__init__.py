@@ -15,6 +15,7 @@ from adafruit_ble.services.standard import BatteryService
 from adafruit_ble.services.standard.hid import HIDService
 
 from adafruit_mcp230xx.mcp23017 import MCP23017 as MCP230xx
+from adafruit_veml7700 import VEML7700
 
 from .hid import HID
 from .model import Matrix, COORDS, Backlight, battery_level, battery_charge, key_name
@@ -82,6 +83,7 @@ class Keyboard:
         self.i2c.try_lock()
         self.backlight = Backlight(dev=self.i2c)
         #self.mcp = MCP230xx(self.i2c)
+        #self.light_sensor = VEML7700(self.i2c)
         self.uid = microcontroller.cpu.uid * 2
         self.usb_status = 0
         self.tap_delay = 500
