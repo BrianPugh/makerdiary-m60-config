@@ -121,17 +121,18 @@ class Keyboard:
         self.layer_mask = 1
 
     def check(self):
+        t = time.time()
         if self.adv_timeout:
             if self.ble.connected:
                 self.adv_timeout = 0
                 self.backlight.set_bt_led(None)
-            elif time.time() > self.adv_timeout:
+            elif t > self.adv_timeout:
                 self.stop_advertising()
 
-        if time.time() > self.backlight_timeout + self.backlight_timeout_period:
+        if t > self.backlight_timeout + self.backlight_timeout_period:
             self.backlight.enabled = False
             self.backlight.off()
-            self.backlight_timeout = time.time()
+            self.backlight_timeout = t
 
         if usb_is_connected():
             if self.usb_status == 0:
@@ -150,9 +151,8 @@ class Keyboard:
             self.backlight.set_hid_leds(self.ble_hid.leds)
 
         # update battery level
-        if time.time() > self.battery_update_time:
-            #self.battery_update_time = time.time() + 3600
-            self.battery_update_time = time.time() + 10
+        if t > self.battery_update_time:
+            self.battery_update_time = t + 3600
             self.battery.level = battery_level()
 
     def setup(self):
