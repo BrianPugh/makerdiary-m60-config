@@ -58,19 +58,19 @@ def macro_handler_batt(dev, is_down):
     if is_down:
         is_charging = battery_charge()
         level = int(round(battery_level() / 7.14))
-        keyboard.backlight.off()
+        dev.backlight.off()
         for i in range(level):
             if i == 0 and is_charging:
-                keyboard.backlight.pixel(i, 255, 0, 0)
+                dev.backlight.pixel(i, 255, 0, 0)
             else:
-                keyboard.backlight.pixel(i, 0, 255, 0)
+                dev.backlight.pixel(i, 0, 255, 0)
 
             if i != level - 1:
                 sleep(0.03)
 
-            keyboard.backlight.update()
+            dev.backlight.update()
     else:
-        keyboard.backlight.set_mode(keyboard.backlight.mode)
+        dev.backlight.set_mode(dev.backlight.mode)
 
 def macro_handler_repl(dev, is_down):
     sys.exit()
