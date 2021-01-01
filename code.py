@@ -10,7 +10,8 @@ keyboard = Keyboard()
 
 ___ = TRANSPARENT
 BOOT = BOOTLOADER
-L1 = LAYER_TAP(1)
+L1 = LAYER_TAP(1)  # Primarily for keys missing on a 60%
+L2 = LAYER_TAP(1)  # Primarily for advanced special functionality.
 
 # Semicolon & Ctrl
 SCC = MODS_TAP(MODS(RCTRL), ';')
@@ -22,7 +23,7 @@ keyboard.keymap = (
         TAB,    Q,   W,   E,   R,   T,   Y,   U,   I,   O,   P, '[', ']', '|',
         L1,     A,   S,   D,   F,   G,   H,   J,   K,   L, ';', '"',    ENTER,
         LSHIFT, Z,   X,   C,   V,   B,   N,   M, ',', '.', '/',         RSHIFT,
-        LCTRL, LGUI, LALT,          SPACE,            RALT,  MENU,  L1,   RCTRL
+        LCTRL, LGUI, LALT,          SPACE,            RALT,  L1,  L2,   RCTRL
     ),
 
     # layer 1
@@ -32,6 +33,15 @@ keyboard.keymap = (
         ___, ___,   VOLDN,   VOLUP, MUTE, ___, HOME, LEFT,  DOWN, RIGHT, INSERT,  ___,      ___,
         ___, ___, BRGHTDN, BRGHTUP, ___,  MACRO(MACRO_BATT),  END,  ___,   ___,   ___,    ___, ___,
         ___, ___,   ___,                   ___,                     ___,   ___,   ___,      ___
+    ),
+
+    # layer 2
+    (
+        '`', ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,
+        ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,
+        ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,      ___,
+        ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,           ___,
+        ___, ___, ___,                ___,               ___, ___, ___,  ___
     ),
 
     # Blank layer for reference
