@@ -147,7 +147,7 @@ keyboard.macro_handler = macro_handler
 keyboard.pairs_handler = pairs_handler
 
 # Pairs: J & K, U & I
-keyboard.pairs = [{35, 36}, {20, 19}]
+#keyboard.pairs = [{35, 36}, {20, 19}]
 
 keyboard.verbose = False
 
