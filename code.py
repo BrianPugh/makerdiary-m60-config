@@ -34,12 +34,12 @@ keyboard.keymap = (
         ___, ___,   ___,                   ___,                     ___,   ___,   ___,      ___
     ),
 
-    # layer 2
+    # layer 2 (Advanced Special Functionality)
     (
-        '`', ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,
-        ___, ___, ___, ___, ___, MACRO(MACRO_INSTALL_TMUX), ___, ___, ___, ___, ___, ___, ___, ___,
+        '`', BT1, BT2, BT3, BT4, BT5, BT6, BT7, BT8, BT9, BT0, ___, ___, ___,
+        ___, ___, ___, ___, ___, MACRO(MACRO_INSTALL_TMUX), ___, USB_TOGGLE, ___, ___, ___, ___, ___, ___,
         ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,      ___,
-        ___, MACRO(MACRO_ZPROFILE), ___, ___, MACRO(MACRO_INSTALL_VIM), ___, ___, ___, ___, ___, ___,           ___,
+        ___, MACRO(MACRO_ZPROFILE), ___, ___, MACRO(MACRO_INSTALL_VIM), BT_TOGGLE, ___, ___, ___, ___, ___,           ___,
         ___, ___, ___,                ___,               ___, ___, ___,  ___
     ),
 
