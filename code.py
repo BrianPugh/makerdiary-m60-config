@@ -5,6 +5,8 @@ from time import sleep
 MACRO_BATT = 1
 MACRO_REPL = 2
 MACRO_INSTALL_VIM = 3
+MACRO_INSTALL_TMUX = 4
+MACRO_ZPROFILE = 5
 
 keyboard = Keyboard()
 
@@ -35,9 +37,9 @@ keyboard.keymap = (
     # layer 2
     (
         '`', ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,
-        ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,
+        ___, ___, ___, ___, ___, MACRO(MACRO_INSTALL_TMUX), ___, ___, ___, ___, ___, ___, ___, ___,
         ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,      ___,
-        ___, ___, ___, ___, MACRO(MACRO_INSTALL_VIM), ___, ___, ___, ___, ___, ___,           ___,
+        ___, MACRO(MACRO_ZPROFILE), ___, ___, MACRO(MACRO_INSTALL_VIM), ___, ___, ___, ___, ___, ___,           ___,
         ___, ___, ___,                ___,               ___, ___, ___,  ___
     ),
 
@@ -76,11 +78,27 @@ def macro_handler_repl(dev, is_down):
 def macro_handler_install_vim(dev, is_down):
     if not is_down:
         return
-    # Install vim
     dev.send_text((
         "git clone --recursive https://github.com/BrianPugh/vimrc.git ~/.vim_runtime"
         " && sh ~/.vim_runtime/install_awesome_vimrc.sh"
         " # Remember to run \"vim\" followed by \":PlugInstall\""
+        ))
+
+def macro_handler_install_tmux(dev, is_down):
+    if not is_down:
+        return
+    dev.send_text((
+        "git clone https://github.com/tmux-plugins/tpm ~/.tmux/plugins/tpm"
+        " && wget -O ~/.tmux.conf https://gist.githubusercontent.com/BrianPugh/8b51fc7422c300e0caa9ec45841d5125/raw/9a6be775cc252bf7fdd6b764103535ef4799840a/tmux.conf"
+        " && tmux source-file ~/.tmux.conf"
+        ))
+
+def macro_handler_zprofile(dev, is_down):
+    if not is_down:
+        return
+    dev.send_text((
+        'echo -e "\\n" >> ~/.zprofile'
+        ' && wget https://gist.githubusercontent.com/BrianPugh/18e6d35e181de2a0371ce9986c448dbe/raw/68b50a6b1ebe7fc6cacfe3e28a8987526909edfc/.zprofile -O ->> ~/.zprofile'
         ))
 
 def macro_handler(dev, n, is_down):
@@ -104,6 +122,8 @@ def macro_handler(dev, n, is_down):
                 MACRO_BATT: macro_handler_batt,
                 MACRO_REPL: macro_handler_repl,
                 MACRO_INSTALL_VIM: macro_handler_install_vim,
+                MACRO_INSTALL_TMUX: macro_handler_install_tmux,
+                MACRO_ZPROFILE: macro_handler_zprofile,
             }
 
     handler = macro_lookup.get(n)
