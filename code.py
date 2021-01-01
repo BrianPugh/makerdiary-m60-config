@@ -1,20 +1,17 @@
-#from PYKB import *
 import sys
 from keyboard import *
 from time import sleep
 
 MACRO_BATT = 1
 MACRO_REPL = 2
+MACRO_INSTALL_VIM = 3
 
 keyboard = Keyboard()
 
 ___ = TRANSPARENT
 BOOT = BOOTLOADER
 L1 = LAYER_TAP(1)  # Primarily for keys missing on a 60%
-L2 = LAYER_TAP(1)  # Primarily for advanced special functionality.
-
-# Semicolon & Ctrl
-SCC = MODS_TAP(MODS(RCTRL), ';')
+L2 = LAYER_TAP(2)  # Primarily for advanced special functionality.
 
 keyboard.keymap = (
     # layer 0
@@ -40,7 +37,7 @@ keyboard.keymap = (
         '`', ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,
         ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,
         ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,      ___,
-        ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,           ___,
+        ___, ___, ___, ___, MACRO(MACRO_INSTALL_VIM), ___, ___, ___, ___, ___, ___,           ___,
         ___, ___, ___,                ___,               ___, ___, ___,  ___
     ),
 
@@ -55,11 +52,36 @@ keyboard.keymap = (
 )
 
 
-def set_mono_backlight(dev):
-    dev.backlight.hue = 7
-    keyboard.backlight.sat = 255
-    keyboard.backlight.val = 100
-    keyboard.backlight.set_mode(1)  # Mono mode
+def macro_handler_batt(dev, is_down):
+    if is_down:
+        is_charging = battery_charge()
+        level = int(round(battery_level() / 7.14))
+        keyboard.backlight.off()
+        for i in range(level):
+            if i == 0 and is_charging:
+                keyboard.backlight.pixel(i, 255, 0, 0)
+            else:
+                keyboard.backlight.pixel(i, 0, 255, 0)
+
+            if i != level - 1:
+                sleep(0.03)
+
+            keyboard.backlight.update()
+    else:
+        keyboard.backlight.set_mode(keyboard.backlight.mode)
+
+def macro_handler_repl(dev, is_down):
+    sys.exit()
+
+def macro_handler_install_vim(dev, is_down):
+    if not is_down:
+        return
+    # Install vim
+    dev.send_text((
+        "git clone --recursive https://github.com/BrianPugh/vimrc.git ~/.vim_runtime"
+        " && sh ~/.vim_runtime/install_awesome_vimrc.sh"
+        " # Remember to run \"vim\" followed by \":PlugInstall\""
+        ))
 
 def macro_handler(dev, n, is_down):
     """
@@ -78,25 +100,15 @@ def macro_handler(dev, n, is_down):
         If ``True``, then the button is pressed. If ``False``, the button is released.
     """
 
-    if n == MACRO_BATT:
-        if is_down:
-            is_charging = battery_charge()
-            level = int(round(battery_level() / 7.14))
-            dev.backlight.val = 0
-            for i in range(level):
-                if i == 0 and is_charging:
-                    keyboard.backlight.pixel(i, 255, 0, 0)
-                else:
-                    keyboard.backlight.pixel(i, 0, 255, 0)
+    macro_lookup = {
+                MACRO_BATT: macro_handler_batt,
+                MACRO_REPL: macro_handler_repl,
+                MACRO_INSTALL_VIM: macro_handler_install_vim,
+            }
 
-                if i != level - 1:
-                    sleep(0.03)
-
-                keyboard.backlight.update()
-        else:
-            set_mono_backlight(dev)
-    elif n == MACRO_REPL:
-        sys.exit()
+    handler = macro_lookup.get(n)
+    if handler is not None:
+        handler(dev, is_down)
 
 
 # ESC(0)    1(1)   2(2)   3(3)   4(4)   5(5)   6(6)   7(7)   8(8)   9(9)   0(10)  -(11)  =(12)  BACKSPACE(13)
@@ -119,6 +131,10 @@ keyboard.pairs = [{35, 36}, {20, 19}]
 
 keyboard.verbose = False
 
-set_mono_backlight(keyboard)
+# Set backlight to monochrome amber
+keyboard.backlight.hue = 7
+keyboard.backlight.sat = 255
+keyboard.backlight.val = 100
+keyboard.backlight.set_mode(1)  # Mono mode
 
 keyboard.run()
