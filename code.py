@@ -14,6 +14,7 @@ ___ = TRANSPARENT
 BOOT = BOOTLOADER
 L1 = LAYER_TAP(1)  # Primarily for keys missing on a 60%
 L2 = LAYER_TAP(2)  # Primarily for advanced special functionality.
+RCTRL_UP = MODS_TAP(MODS(RCTRL), UP)  # Tapping right control sends the "up" arrow
 
 keyboard.keymap = (
     # layer 0
@@ -22,7 +23,7 @@ keyboard.keymap = (
         TAB,    Q,   W,   E,   R,   T,   Y,   U,   I,   O,   P, '[', ']', '|',
         L1,     A,   S,   D,   F,   G,   H,   J,   K,   L, ';', '"',    ENTER,
         LSHIFT, Z,   X,   C,   V,   B,   N,   M, ',', '.', '/',         RSHIFT,
-        LCTRL, LGUI, LALT,          SPACE,            RALT,  L1,  L2,   RCTRL
+        LCTRL, LGUI, LALT,          SPACE,            RALT,  L1,  L2,   RCTRL_UP
     ),
 
     # layer 1
