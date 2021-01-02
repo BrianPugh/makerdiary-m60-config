@@ -2,11 +2,13 @@ import sys
 from keyboard import *
 from time import sleep
 
-MACRO_BATT = 1
-MACRO_REPL = 2
-MACRO_INSTALL_VIM = 3
-MACRO_INSTALL_TMUX = 4
-MACRO_ZPROFILE = 5
+MACRO_BATT = const(1)
+MACRO_REPL = const(2)
+MACRO_INSTALL_VIM = const(3)
+MACRO_INSTALL_TMUX = const(4)
+MACRO_ZPROFILE = const(5)
+MACRO_RGB_VAL_INC = const(6)
+MACRO_RGB_VAL_DEC = const(7)
 
 keyboard = Keyboard()
 
@@ -37,10 +39,10 @@ keyboard.keymap = (
 
     # layer 2 (Advanced Special Functionality)
     (
-        '`', BT1, BT2, BT3, BT4, BT5, BT6, BT7, BT8, BT9, BT0, ___, ___, ___,
+        '`', BT1, BT2, BT3, BT4, BT5, BT6, BT7, BT8, BT9, BT0, MACRO(MACRO_RGB_VAL_DEC), MACRO(MACRO_RGB_VAL_INC), ___,
         ___, ___, ___, ___, ___, MACRO(MACRO_INSTALL_TMUX), ___, USB_TOGGLE, ___, ___, ___, ___, ___, ___,
-        ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___, ___,      ___,
-        ___, MACRO(MACRO_ZPROFILE), ___, ___, MACRO(MACRO_INSTALL_VIM), BT_TOGGLE, ___, ___, ___, ___, ___,           ___,
+        ___, ___, SUSPEND, ___, ___, ___, ___, ___, ___, ___, ___, ___,      ___,
+        ___, MACRO(MACRO_ZPROFILE), ___, ___, MACRO(MACRO_INSTALL_VIM), BT_TOGGLE, ___, ___, ___, ___, ___, ___,
         ___, ___, ___,                ___,               ___, ___, ___,  ___
     ),
 
@@ -106,6 +108,29 @@ def macro_handler_zprofile(dev, is_down, shift, ctrl):
         ' && wget https://gist.githubusercontent.com/BrianPugh/18e6d35e181de2a0371ce9986c448dbe/raw/68b50a6b1ebe7fc6cacfe3e28a8987526909edfc/.zprofile -O ->> ~/.zprofile'
         ))
 
+def macro_handler_rgb_val_dec(dev, is_down, shift, ctrl):
+    if not is_down:
+        return
+    if shift:
+        dev.backlight.val -= 30
+    else:
+        dev.backlight.val -= 10
+    if dev.backlight.val <= 0:
+        dev.backlight.val = 0
+        dev._backlight_off()
+    dev.backlight.update()
+
+def macro_handler_rgb_val_inc(dev, is_down, shift, ctrl):
+    if not is_down:
+        return
+    if shift:
+        dev.backlight.val += 30
+    else:
+        dev.backlight.val += 10
+    if dev.backlight.val > 255:
+        dev.backlight.val = 255
+    dev.backlight.update()
+
 def macro_handler(dev, n, is_down, shift, ctrl):
     """
     Parameters
@@ -129,6 +154,8 @@ def macro_handler(dev, n, is_down, shift, ctrl):
                 MACRO_INSTALL_VIM: macro_handler_install_vim,
                 MACRO_INSTALL_TMUX: macro_handler_install_tmux,
                 MACRO_ZPROFILE: macro_handler_zprofile,
+                MACRO_RGB_VAL_DEC: macro_handler_rgb_val_dec,
+                MACRO_RGB_VAL_INC: macro_handler_rgb_val_inc,
             }
 
     handler = macro_lookup.get(n)
