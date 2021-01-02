@@ -55,28 +55,32 @@ keyboard.keymap = (
 )
 
 
-def macro_handler_batt(dev, is_down):
+def macro_handler_batt(dev, is_down, shift, ctrl):
     if is_down:
+        level = battery_level()
         is_charging = battery_charge()
-        level = int(round(battery_level() / 7.14))
-        dev.backlight.off()
-        for i in range(level):
-            if i == 0 and is_charging:
-                dev.backlight.pixel(i, 255, 0, 0)
-            else:
-                dev.backlight.pixel(i, 0, 255, 0)
+        if shift:
+            dev.send_text("Battery Level: {}%".format(level))
+        else:
+            bars = int(round(level / 7.14))
+            dev.backlight.off()
+            for i in range(bars):
+                if i == 0 and is_charging:
+                    dev.backlight.pixel(i, 255, 0, 0)
+                else:
+                    dev.backlight.pixel(i, 0, 255, 0)
 
-            if i != level - 1:
-                sleep(0.03)
+                dev.backlight.update()
 
-            dev.backlight.update()
+                if i != bars - 1:
+                    sleep(0.03)
     else:
         dev.backlight.set_mode(dev.backlight.mode)
 
-def macro_handler_repl(dev, is_down):
+def macro_handler_repl(dev, is_down, shift, ctrl):
     sys.exit()
 
-def macro_handler_install_vim(dev, is_down):
+def macro_handler_install_vim(dev, is_down, shift, ctrl):
     if not is_down:
         return
     dev.send_text((
@@ -85,7 +89,7 @@ def macro_handler_install_vim(dev, is_down):
         " # Remember to run \"vim\" followed by \":PlugInstall\""
         ))
 
-def macro_handler_install_tmux(dev, is_down):
+def macro_handler_install_tmux(dev, is_down, shift, ctrl):
     if not is_down:
         return
     dev.send_text((
@@ -94,7 +98,7 @@ def macro_handler_install_tmux(dev, is_down):
         " && tmux source-file ~/.tmux.conf"
         ))
 
-def macro_handler_zprofile(dev, is_down):
+def macro_handler_zprofile(dev, is_down, shift, ctrl):
     if not is_down:
         return
     dev.send_text((
@@ -102,7 +106,7 @@ def macro_handler_zprofile(dev, is_down):
         ' && wget https://gist.githubusercontent.com/BrianPugh/18e6d35e181de2a0371ce9986c448dbe/raw/68b50a6b1ebe7fc6cacfe3e28a8987526909edfc/.zprofile -O ->> ~/.zprofile'
         ))
 
-def macro_handler(dev, n, is_down):
+def macro_handler(dev, n, is_down, shift, ctrl):
     """
     Parameters
     ----------
@@ -129,7 +133,7 @@ def macro_handler(dev, n, is_down):
 
     handler = macro_lookup.get(n)
     if handler is not None:
-        handler(dev, is_down)
+        handler(dev, is_down, shift, ctrl)
 
 
 # ESC(0)    1(1)   2(2)   3(3)   4(4)   5(5)   6(6)   7(7)   8(8)   9(9)   0(10)  -(11)  =(12)  BACKSPACE(13)

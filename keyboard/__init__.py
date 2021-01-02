@@ -528,6 +528,10 @@ class Keyboard:
         mouse_action = 0
         mouse_time = 0
 
+        # possible values are 0 (no pressed), 1 (left or right), or 2 (left and right)
+        shift_pressed = 0
+        ctrl_pressed = 0
+
         while True:
             t = 20 if self.backlight.check() or mouse_action else 1000
             n = matrix.wait(t)
@@ -569,9 +573,16 @@ class Keyboard:
                 event = self.get()
                 key = event & 0x7F
                 if event & 0x80 == 0:
+                    # PRESSED
+
                     action_code = self.action_code(key)
                     keys[key] = action_code
                     if action_code < 0xFF:
+                        if action_code == LSHIFT or action_code == RSHIFT:
+                            shift_pressed += 1
+                        elif action_code == LCTRL or action_code == RCTRL:
+                            ctrl_pressed += 1
+
                         self.press(action_code)
                     else:
                         kind = action_code >> 12
@@ -630,7 +641,7 @@ class Keyboard:
                             if callable(self.macro_handler):
                                 i = action_code & 0xFFF
                                 try:
-                                    self.macro_handler(dev, i, True)
+                                    self.macro_handler(dev, i, True, shift_pressed > 0, ctrl_pressed > 0)
                                 except Exception as e:
                                     print(e)
                         elif kind == ACT_BACKLIGHT:
@@ -683,8 +694,15 @@ class Keyboard:
                             )
                         )
                 else:
+                    # RELEASED
+
                     action_code = keys[key]
                     if action_code < 0xFF:
+                        if action_code == LSHIFT or action_code == RSHIFT:
+                            shift_pressed -= 1
+                        elif action_code == LCTRL or action_code == RCTRL:
+                            ctrl_pressed -= 1
+
                         self.release(action_code)
                     else:
                         kind = action_code >> 12
@@ -721,7 +739,8 @@ class Keyboard:
                         elif kind == ACT_MACRO:
                             i = action_code & 0xFFF
                             try:
-                                self.macro_handler(dev, i, False)
+                                # Macro button release
+                                self.macro_handler(dev, i, False, shift_pressed > 0, ctrl_pressed > 0)
                             except Exception as e:
                                 print(e)
 
