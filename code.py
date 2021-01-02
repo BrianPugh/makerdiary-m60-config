@@ -80,7 +80,8 @@ def macro_handler_batt(dev, is_down, shift, ctrl):
         dev.backlight.set_mode(dev.backlight.mode)
 
 def macro_handler_repl(dev, is_down, shift, ctrl):
-    sys.exit()
+    if shift and ctrl:
+        sys.exit()
 
 def macro_handler_install_vim(dev, is_down, shift, ctrl):
     if not is_down:
