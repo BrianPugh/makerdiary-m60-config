@@ -282,16 +282,19 @@ class Keyboard:
     def get_key_sequence_info(self, start, end):
         """Get the info from a sequence of key events"""
         matrix = self.matrix
+        verbose = self.verbose
+
         event = matrix.view(start - 1)
         key = event & 0x7F
-        if self.verbose:
+
+        if verbose:
             desc = key_name(key)
         if event < 0x80:
-            if self.verbose:
+            if verbose:
                 desc += " \\ "
             t0 = matrix.get_keydown_time(key)
         else:
-            if self.verbose:
+            if verbose:
                 desc += " / "
             t0 = matrix.get_keyup_time(key)
 
@@ -299,21 +302,21 @@ class Keyboard:
         for i in range(start, end):
             event = matrix.view(i)
             key = event & 0x7F
-            if self.verbose:
+            if verbose:
                 desc += key_name(key)
             if event < 0x80:
-                if self.verbose:
+                if verbose:
                     desc += " \\ "
                 t1 = matrix.get_keydown_time(key)
             else:
-                if self.verbose:
+                if verbose:
                     desc += " / "
                 t1 = matrix.get_keyup_time(key)
             dt = matrix.ms(t1 - t0)
             t0 = t1
             t.append(dt)
 
-        if self.verbose:
+        if verbose:
             return desc, t
         else:
             return "", t
@@ -321,6 +324,8 @@ class Keyboard:
     def is_tapping_key(self, key):
         """Check if the key is tapped (press & release quickly)"""
         matrix = self.matrix
+        verbose = self.verbose
+        get_key_sequence_info = self.get_key_sequence_info
         n = len(matrix)
         if n == 0:
             n = matrix.wait(
@@ -338,7 +343,7 @@ class Keyboard:
                 #           |  dt1  |
                 #         dt1 < tap_delay
                 if self.verbose:
-                    desc, t = self.get_key_sequence_info(-1, n)
+                    desc, t = get_key_sequence_info(-1, n)
                     print(desc)
                     print(t)
                 return True
@@ -357,14 +362,14 @@ class Keyboard:
             # --+-------+-------+-------+------> t
             #   |  dt1  |  dt2  |
             # dt1 < tap_delay && dt2 < fast_type_thresh
-            if self.verbose:
-                desc, t = self.get_key_sequence_info(-1, n)
+            if verbose:
+                desc, t = get_key_sequence_info(-1, n)
                 print(desc)
                 print(t)
             return True
 
-        if self.verbose:
-            desc, t = self.get_key_sequence_info(-1, n)
+        if verbose:
+            desc, t = get_key_sequence_info(-1, n)
             print(desc)
             print(t)
 
@@ -532,6 +537,8 @@ class Keyboard:
         monotonic = time.monotonic_ns
         log = self.log
         matrix = self.matrix
+        verbose = self.verbose
+        press = self.press
         dev = Device(self)
         keys = [0] * matrix.keys
         last_time = 0
@@ -594,7 +601,7 @@ class Keyboard:
                         elif action_code == LCTRL or action_code == RCTRL:
                             ctrl_pressed += 1
 
-                        self.press(action_code)
+                        press(action_code)
                     else:
                         kind = action_code >> 12
                         if kind < ACT_MODS_TAP:
@@ -602,18 +609,18 @@ class Keyboard:
                             mods = (action_code >> 8) & 0x1F
                             keycodes = mods_to_keycodes(mods)
                             keycodes.append(action_code & 0xFF)
-                            self.press(*keycodes)
+                            press(*keycodes)
                         elif kind < ACT_USAGE:
                             # MODS_TAP
                             if self.is_tapping_key(key):
                                 log("TAP")
                                 keycode = action_code & 0xFF
                                 keys[key] = keycode
-                                self.press(keycode)
+                                press(keycode)
                             else:
                                 mods = (action_code >> 8) & 0x1F
                                 keycodes = mods_to_keycodes(mods)
-                                self.press(*keycodes)
+                                press(*keycodes)
                         elif kind == ACT_USAGE:
                             if action_code & 0x400:
                                 self.send_consumer(action_code & 0x3FF)
@@ -630,7 +637,7 @@ class Keyboard:
                                 log("LAYER_MODS")
                                 mods = action_code & 0x1F
                                 keycodes = mods_to_keycodes(mods)
-                                self.press(*keycodes)
+                                press(*keycodes)
                                 self.layer_mask |= mask
                             elif self.is_tapping_key(key):
                                 log("TAP")
@@ -643,7 +650,7 @@ class Keyboard:
                                     keys[key] = 0
                                 else:
                                     keys[key] = keycode
-                                    self.press(keycode)
+                                    press(keycode)
                             else:
                                 self.layer_mask |= mask
 
@@ -694,7 +701,7 @@ class Keyboard:
                                 log("switch to bt {}".format(i))
                                 self.change_bt(i)
 
-                    if self.verbose:
+                    if verbose:
                         t_now = monotonic()
                         keydown_time = t_log
                         dt = t_now - keydown_time
@@ -757,7 +764,7 @@ class Keyboard:
                             except Exception as e:
                                 print(e)
 
-                    if self.verbose:
+                    if verbose:
                         t_now = monotonic()
                         keyup_time = t_log
                         dt = t_now - keyup_time
