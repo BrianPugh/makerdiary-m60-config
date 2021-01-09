@@ -14,6 +14,7 @@ from adafruit_ble.advertising.standard import ProvideServicesAdvertisement
 from adafruit_ble.services.standard import BatteryService
 from adafruit_ble.services.standard.hid import HIDService
 
+import micropython
 from micropython import const
 from adafruit_mcp230xx.mcp23017 import MCP23017 as MCP230xx
 from adafruit_veml7700 import VEML7700
@@ -283,30 +284,39 @@ class Keyboard:
         matrix = self.matrix
         event = matrix.view(start - 1)
         key = event & 0x7F
-        desc = key_name(key)
+        if self.verbose:
+            desc = key_name(key)
         if event < 0x80:
-            desc += " \\ "
+            if self.verbose:
+                desc += " \\ "
             t0 = matrix.get_keydown_time(key)
         else:
-            desc += " / "
+            if self.verbose:
+                desc += " / "
             t0 = matrix.get_keyup_time(key)
 
         t = []
         for i in range(start, end):
             event = matrix.view(i)
             key = event & 0x7F
-            desc += key_name(key)
+            if self.verbose:
+                desc += key_name(key)
             if event < 0x80:
-                desc += " \\ "
+                if self.verbose:
+                    desc += " \\ "
                 t1 = matrix.get_keydown_time(key)
             else:
-                desc += " / "
+                if self.verbose:
+                    desc += " / "
                 t1 = matrix.get_keyup_time(key)
             dt = matrix.ms(t1 - t0)
             t0 = t1
             t.append(dt)
 
-        return desc, t
+        if self.verbose:
+            return desc, t
+        else:
+            return "", t
 
     def is_tapping_key(self, key):
         """Check if the key is tapped (press & release quickly)"""
@@ -696,6 +706,7 @@ class Keyboard:
                             )
                         )
                 else:
+                    #print(monotonic()-t_log)
                     # RELEASED
 
                     action_code = keys[key]
