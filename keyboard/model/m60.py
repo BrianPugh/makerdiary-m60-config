@@ -4,7 +4,7 @@ import microcontroller
 from .is32fl3733 import IS31FL3733
 
 try:
-    # usebuilt-in matrix if it is available
+    # usebuilt-in c-optimized matrix if it is available
     from matrix import Matrix
 except ImportError:
     from ..matrix import Matrix

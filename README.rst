@@ -9,7 +9,7 @@ General Notes
 
 How to Upgrade Firmware
 -----------------------
-* With USB connected, press ``Fn+b``
+* With USB connected, press ``L1+r``
 * When the bootloader is running, a USB drive named M60Keyboard will appear in 
   your computer. Download the latest .uf2 firmware, drag-n-drop the firmware 
   into the USB drive, and then wait until a new USB drive named CIRCUITPY 
