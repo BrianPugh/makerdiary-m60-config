@@ -9,6 +9,7 @@ MACRO_INSTALL_TMUX = const(4)
 MACRO_ZPROFILE = const(5)
 MACRO_RGB_VAL_INC = const(6)
 MACRO_RGB_VAL_DEC = const(7)
+MACRO_IPDB = const(8)
 
 keyboard = Keyboard()
 
@@ -31,7 +32,7 @@ keyboard.keymap = (
     # layer 1
     (
         '`',  F1,      F2,      F3,   F4,   F5,   F6,   F7,    F8,    F9,    F10,  F11, F12, DEL,
-        ___, MACRO(MACRO_REPL),     ___,     ___, BOOT,  ___,  ___, PGUP,    UP,  PGDN, PRTSCN,  ___, ___, ___,
+        ___, MACRO(MACRO_REPL),     ___,     ___, BOOT,  ___,  ___, PGUP,    UP,  PGDN, MACRO(MACRO_IPDB),  ___, ___, ___,
         ___, ___,   VOLDN,   VOLUP, MUTE, ___, HOME, LEFT,  DOWN, RIGHT, INSERT,  ___,      ___,
         ___, ___, BRGHTDN, BRGHTUP, ___,  MACRO(MACRO_BATT),  END,  ___,   ___,   ___,    ___, ___,
         ___, ___,   ___,                   ___,                     ___,   ___,   ___,      ___
@@ -131,6 +132,17 @@ def macro_handler_rgb_val_inc(dev, is_down, shift, ctrl):
         dev.backlight.val = 255
     dev.backlight.update()
 
+def macro_handler_ipdb(dev, is_down, shift, ctrl):
+    if not is_down:
+        return
+    dev.send_text((
+        '\x1b'
+        'o'
+        'import ipdb as pdb; pdb.set_trace()'
+        '\x1b'
+        ':w\n'
+        ))
+
 def macro_handler(dev, n, is_down, shift, ctrl):
     """
     Parameters
@@ -156,6 +168,7 @@ def macro_handler(dev, n, is_down, shift, ctrl):
                 MACRO_ZPROFILE: macro_handler_zprofile,
                 MACRO_RGB_VAL_DEC: macro_handler_rgb_val_dec,
                 MACRO_RGB_VAL_INC: macro_handler_rgb_val_inc,
+                MACRO_IPDB: macro_handler_ipdb,
             }
 
     handler = macro_lookup.get(n)
