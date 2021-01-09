@@ -181,7 +181,7 @@ keyboard.pairs_handler = pairs_handler
 # Pairs: J & K, U & I
 #keyboard.pairs = [{35, 36}, {20, 19}]
 
-keyboard.verbose = False
+keyboard.verbose = True
 
 # Set backlight to monochrome amber
 keyboard.backlight.hue = 7

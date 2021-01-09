@@ -519,11 +519,11 @@ class Keyboard:
 
     def run(self):
         self.setup()
+        monotonic = time.monotonic_ns
         log = self.log
         matrix = self.matrix
         dev = Device(self)
         keys = [0] * matrix.keys
-        ms = matrix.ms
         last_time = 0
         mouse_action = 0
         mouse_time = 0
@@ -534,6 +534,7 @@ class Keyboard:
 
         while True:
             t = 20 if self.backlight.check() or mouse_action else 1000
+            t_log = monotonic()
             n = matrix.wait(t)
             self.check()
 
@@ -684,13 +685,14 @@ class Keyboard:
                                 self.change_bt(i)
 
                     if self.verbose:
-                        keydown_time = matrix.get_keydown_time(key)
-                        dt = ms(matrix.time() - keydown_time)
-                        dt2 = ms(keydown_time - last_time)
+                        t_now = monotonic()
+                        keydown_time = t_log
+                        dt = t_now - keydown_time
+                        dt2 = keydown_time - last_time
                         last_time = keydown_time
                         print(
-                            "{} {} \\ {} latency {} | {}".format(
-                                key, key_name(key), hex(action_code), dt, dt2
+                                "{} {} \\ 0x{:04x} latency {:,} | {:,}".format(
+                                key, key_name(key), action_code, dt, dt2
                             )
                         )
                 else:
@@ -745,13 +747,14 @@ class Keyboard:
                                 print(e)
 
                     if self.verbose:
-                        keyup_time = matrix.get_keyup_time(key)
-                        dt = ms(matrix.time() - keyup_time)
-                        dt2 = ms(keyup_time - last_time)
+                        t_now = monotonic()
+                        keyup_time = t_log
+                        dt = t_now - keyup_time
+                        dt2 = keyup_time - last_time
                         last_time = keyup_time
                         print(
-                            "{} {} / {} latency {} | {}".format(
-                                key, key_name(key), hex(action_code), dt, dt2
+                                "{} {} / 0x{:04x} latency {:,} | {:,}".format(
+                                key, key_name(key), action_code, dt, dt2
                             )
                         )
 
