@@ -139,7 +139,7 @@ def macro_handler_ipdb(dev, is_down, shift, ctrl):
     dev.send_text((
         '\x1b'
         'o'
-        'import ipdb as pdb; pdb.set_trace()'
+        'import ipdb; ipdb.set_trace()'
         '\x1b'
         ':w\n'
         ))
