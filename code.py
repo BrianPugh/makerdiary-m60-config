@@ -191,6 +191,10 @@ def pairs_handler(dev, n):
 keyboard.macro_handler = macro_handler
 keyboard.pairs_handler = pairs_handler
 
+keyboard.matrix.debounce_time = 6
+keyboard.tap_delay = 200
+keyboard.fast_type_thresh = 100
+
 # Pairs: J & K, U & I
 #keyboard.pairs = [{35, 36}, {20, 19}]
 
