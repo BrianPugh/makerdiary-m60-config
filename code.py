@@ -10,6 +10,7 @@ MACRO_ZPROFILE = const(5)
 MACRO_RGB_VAL_INC = const(6)
 MACRO_RGB_VAL_DEC = const(7)
 MACRO_IPDB = const(8)
+MACRO_TEST = const(9)
 
 keyboard = Keyboard()
 
@@ -43,7 +44,7 @@ keyboard.keymap = (
         '`', BT1, BT2, BT3, BT4, BT5, BT6, BT7, BT8, BT9, BT0, MACRO(MACRO_RGB_VAL_DEC), MACRO(MACRO_RGB_VAL_INC), ___,
         ___, ___, ___, ___, ___, MACRO(MACRO_INSTALL_TMUX), ___, USB_TOGGLE, ___, ___, ___, ___, ___, ___,
         ___, ___, SUSPEND, ___, ___, ___, ___, ___, ___, ___, ___, ___,      ___,
-        ___, MACRO(MACRO_ZPROFILE), ___, ___, MACRO(MACRO_INSTALL_VIM), BT_TOGGLE, ___, ___, ___, ___, ___, ___,
+        ___, MACRO(MACRO_ZPROFILE), ___, ___, MACRO(MACRO_INSTALL_VIM), BT_TOGGLE, ___, ___, ___, ___, MACRO(MACRO_TEST), ___,
         ___, ___, ___,                ___,               ___, ___, ___,  ___
     ),
 
@@ -143,6 +144,12 @@ def macro_handler_ipdb(dev, is_down, shift, ctrl):
         ':w\n'
         ))
 
+def macro_handler_test(dev, is_down, shift, ctrl):
+    if is_down:
+        dev.send_text("\\ test\n")
+    else:
+        dev.send_text("/ test\n")
+
 def macro_handler(dev, n, is_down, shift, ctrl):
     """
     Parameters
@@ -169,6 +176,7 @@ def macro_handler(dev, n, is_down, shift, ctrl):
                 MACRO_RGB_VAL_DEC: macro_handler_rgb_val_dec,
                 MACRO_RGB_VAL_INC: macro_handler_rgb_val_inc,
                 MACRO_IPDB: macro_handler_ipdb,
+                MACRO_TEST: macro_handler_test,
             }
 
     handler = macro_lookup.get(n)
