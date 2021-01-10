@@ -40,15 +40,21 @@ class HID:
             self._leds = None
 
     def press(self, *keycodes):
+        """
+        a hid report is composed of 1 Modifier byte and up to 6 keycodes:
+                MM-00-KK-KK-KK-KK-KK-KK
+        where MM is modifier, KK are keycodes
+        """
         for keycode in keycodes:
             if 0xE0 <= keycode and keycode < 0xE8:
                 self.report[0] |= 1 << (keycode & 0x7)
                 continue
 
             for c in self.report_keys:
-                if c == keycode:
+                if c == keycode:  # The keycode is already in the report
                     break
             else:
+                # Place the keycode in the next empty slot
                 for i in range(6):
                     if self.report_keys[i] == 0:
                         self.report_keys[i] = keycode
