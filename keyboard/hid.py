@@ -39,6 +39,11 @@ class HID:
         else:
             self._leds = None
 
+    def print_report(self, prefix=""):
+        print("{}: 0x{:02x} 0x{:02x} 0x{:02x} 0x{:02x} 0x{:02x} 0x{:02x} 0x{:02x} 0x{:02x}".format(
+            prefix, self.report[0], self.report[1], self.report[2], self.report[3], self.report[4], self.report[5], self.report[6], self.report[07]
+            ))
+
     def press(self, *keycodes):
         """
         a hid report is composed of 1 Modifier byte and up to 6 keycodes:
