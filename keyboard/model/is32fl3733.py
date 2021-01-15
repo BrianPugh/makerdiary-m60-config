@@ -2,6 +2,7 @@ import board
 import busio
 import digitalio
 import microcontroller
+from adafruit_bus_device.i2c_device import I2CDevice
 
 
 class IS31FL3733:
@@ -19,8 +20,7 @@ class IS31FL3733:
 
         if dev is None:
             dev = busio.I2C(board.SCL, board.SDA, frequency=400000)
-        self.i2c = dev
-        self.i2c.try_lock()
+        self.i2c = I2CDevice(dev, self.address)
 
         self.reset()
         self.setup()
@@ -114,7 +114,8 @@ class IS31FL3733:
     def update(self):
         self.power.value = 1
         self.page(1)
-        self.i2c.writeto(self.address, self._buffer)
+        with self.i2c:
+            self.i2c.write(self._buffer)
         if not self.any():
             self.power.value = 0
 
@@ -129,16 +130,18 @@ class IS31FL3733:
 
     def write(self, register, value):
         if type(value) is int:
-            self.i2c.writeto(self.address, bytearray((register, value)))
+            with self.i2c:
+                self.i2c.write(bytearray((register, value)))
         else:
             value.insert(0, register)
             buffer = bytearray(value)
-
-            self.i2c.writeto(self.address, buffer)
+            with self.i2c:
+                self.i2c.write(buffer)
 
     def read(self, register):
         buffer = bytearray(1)
-        self.i2c.writeto_then_readfrom(self.address, bytearray((register,)), buffer)
+        with self.i2c:
+            self.i2c.write_then_readinto(bytearray((register,)), buffer)
         return buffer[0]
 
     def set_mode(self, i, mode=2):
@@ -158,12 +161,14 @@ class IS31FL3733:
         # 18h ~ 2Fh LED Open Register
         self.page(0)
         buffer = bytearray(0x18)
-        self.i2c.writeto_then_readfrom(self.address, bytearray((0x18,)), buffer)
+        with self.i2c:
+            self.i2c.write_then_readinto(bytearray((0x18,)), buffer)
         return buffer
 
     def short_pixels(self):
         # 30h ~ 47h LED Short Register
         self.page(0)
         buffer = bytearray(0x18)
-        self.i2c.writeto_then_readfrom(self.address, bytearray((0x30,)), buffer)
+        with self.i2c:
+            self.i2c.write_then_readinto(bytearray((0x30,)), buffer)
         return buffer
