@@ -45,6 +45,7 @@ Implementation Notes
 """
 
 from micropython import const
+from time import sleep
 import adafruit_bus_device.i2c_device as i2cdevice
 from adafruit_register.i2c_struct import UnaryStruct, ROUnaryStruct
 from adafruit_register.i2c_bits import RWBits
@@ -75,6 +76,13 @@ class VEML7700:
     ALS_200MS = const(0x1)
     ALS_400MS = const(0x2)
     ALS_800MS = const(0x3)
+
+    # Power Savings Mode settings
+    ALS_PSM_0 = const(0x0)
+    ALS_PSM_1 = const(0x1)
+    ALS_PSM_2 = const(0x2)
+    ALS_PSM_3 = const(0x3)
+
 
     # Gain value integers
     gain_values = {
@@ -139,8 +147,10 @@ class VEML7700:
     # ALS_CONF_0 - ALS gain, integration time, interrupt and shutdown.
     light_shutdown = RWBit(0x00, 0, register_width=2)
     """Ambient light sensor shutdown. When ``True``, ambient light sensor is disabled."""
+
     light_interrupt = RWBit(0x00, 1, register_width=2)
     """Enable interrupt. ``True`` to enable, ``False`` to disable."""
+
     light_gain = RWBits(2, 0x00, 11, register_width=2)
     """Ambient light gain setting. Gain settings are 2, 1, 1/4 and 1/8. Settings options are:
     ALS_GAIN_2, ALS_GAIN_1, ALS_GAIN_1_4, ALS_GAIN_1_8.
@@ -201,16 +211,21 @@ class VEML7700:
     light_interrupt_low = ROBit(0x06, 15, register_width=2)
     """Ambient light low threshold interrupt flag. Triggered when low threshold exceeded."""
 
+    light_psm = RWBits(2, 0x03, 1, register_width=2)
+    light_psm_en = RWBit(0x03, 0, register_width=2)
+
     def __init__(self, i2c_bus, address=0x10):
         self.i2c_device = i2cdevice.I2CDevice(i2c_bus, address)
         for _ in range(3):
             try:
                 self.light_shutdown = False  # Enable the ambient light sensor
+
                 break
             except OSError:
                 pass
         else:
             raise RuntimeError("Unable to enable VEML7700 device")
+        #sleep(0.0025)  # Application note recommends sleeping for 2.5mS before configuring
 
     def integration_time_value(self):
         """Integration time value in integer form. Used for calculating ``resolution``."""
@@ -261,3 +276,13 @@ class VEML7700:
                 time.sleep(0.1)
         """
         return self.resolution() * self.light
+
+    @property
+    def refresh_time(self):
+        """ Returns light-sampling refresh period in mS
+        """
+        integration_time = self.integration_time_value()
+        if not self.light_psm_en:
+            return 
+
+        return 500 * (1 << self.light_psm)  + integration_time
