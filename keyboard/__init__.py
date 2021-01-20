@@ -1,5 +1,7 @@
+import sys
 import array
 import time
+from time import sleep
 import struct
 
 import _bleio
@@ -25,34 +27,8 @@ from .action_code import *
 from .util import usb_is_connected, do_nothing
 
 _ENABLE_BACKLIGHT_TIMEOUT = const(1)
-_ENABLE_LIGHT_SENSOR = const(0)
+_ENABLE_LIGHT_SENSOR = const(1)
 _ENABLE_MCP230XX = const(0)
-
-class LightSensor(VEML7700):
-
-    def __init__(self, i2c_bus, address=0x10):
-        super().__init__(i2c_bus, address=address)
-        self.off()
-
-    def on(self):
-        self.light_shutdown = False
-
-    def off(self):
-        self.light_shutdown = True
-
-    def __enter__(self):
-        self.on()
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.off()
-
-    @property
-    def lux(self):
-        self.on()
-        lux = super().lux
-        self.off()
-        return lux
-
 
 def reset_into_bootloader():
     microcontroller.on_next_reset(microcontroller.RunMode.BOOTLOADER)
@@ -101,7 +77,7 @@ class Device:
 
 class Keyboard:
     def __init__(self, keymap=(), verbose=True):
-        t = time.time()
+        t = time.monotonic()
 
         self.keymap = keymap
         self.verbose = verbose
@@ -113,8 +89,7 @@ class Keyboard:
         self.layer_mask = 1
         self.matrix = Matrix()
 
-        self.i2c = busio.I2C(board.SCL, board.SDA, frequency=400000)
-        self.i2c.try_lock()
+        self.i2c = busio.I2C(board.SCL, board.SDA)
 
         self.backlight = Backlight(dev=self.i2c)
 
@@ -125,13 +100,20 @@ class Keyboard:
         self.mcp = MCP230xx(self.i2c) if _ENABLE_MCP230XX else None
 
         if _ENABLE_LIGHT_SENSOR:
-            self.lux = 0
             self.light_sensor = VEML7700(self.i2c)
-            # light sensor is behind dark resin, so use max gain
             self.light_sensor.light_gain = VEML7700.ALS_GAIN_2
+
+            # This configuration should consume approx 5uA
+            self.light_sensor.light_integration_time = VEML7700.ALS_100MS
+            self.light_sensor.light_psm = VEML7700.ALS_PSM_1
+            self.light_sensor.light_psm_en = True
+
             self.light_sensor_time = t
-            self.light_sensor_period = const(1)
-            # TODO: read here
+            self.light_sensor_period =  self.light_sensor.refresh_time / 1000
+            print("Refresh period: ", self.light_sensor_period)
+            self.light_sensor_thresh = const(1)
+            self.lux = self.light_sensor.lux
+            print(self.lux)
 
         self.uid = microcontroller.cpu.uid * 2
         self.usb_status = 0
@@ -168,14 +150,18 @@ class Keyboard:
             return
 
         if _ENABLE_BACKLIGHT_TIMEOUT:
-            if t < self.backlight_timeout + self.backlight_timeout_period:
-                # backlight is off due to inactivity, don't read
+            if t > self.backlight_timeout + self.backlight_timeout_period:
+                # backlight is off due to inactivity, don't need to wake and read sensor
                 return
 
-        if t < self.light_sensor_time + self.light_sensor_period:
+        next_wakeup = self.light_sensor_time + self.light_sensor_period
+
+        if t < next_wakeup:
             return
 
+        self.light_sensor_time = t
         self.lux = self.light_sensor.lux
+        print("Lux: {}".format(self.lux))
 
     def _check_backlight_timeout(self, t):
         """ Turns off backlight if keyboard hasn't had an input in a while.
@@ -184,10 +170,14 @@ class Keyboard:
             return
 
         if t < self.backlight_timeout + self.backlight_timeout_period:
+            if _ENABLE_LIGHT_SENSOR:
+                if self.lux > self.light_sensor_thresh:
+                    self._backlight_off()
+                else:
+                    self._backlight_on()
             return
 
         self._backlight_off()
-        self.backlight_timeout = t
 
     def _backlight_off(self):
         if not self.backlight.enabled:
@@ -199,7 +189,7 @@ class Keyboard:
         if self.backlight.enabled:
             # Already on, no need to send I2C commands
             return
-        if _ENABLE_LIGHT_SENSOR and self.lux > 1000:  # TODO: fine tune this threshold
+        if _ENABLE_LIGHT_SENSOR and self.lux > self.light_sensor_thresh:
             # Don't turn on lights in bright environement
             return
         self.backlight.enabled = True
@@ -219,7 +209,7 @@ class Keyboard:
         """ Time and other non-key event-based handlers
         """
 
-        t = time.time()
+        t = time.monotonic()
 
         self._check_light_sensor(t)
         self._check_backlight_timeout(t)
@@ -269,7 +259,7 @@ class Keyboard:
     def start_advertising(self):
         self.ble.start_advertising(self.advertisement)
         self.backlight.set_bt_led(self.ble_id)
-        self.adv_timeout = time.time() + 60
+        self.adv_timeout = time.monotonic() + 60
 
     def stop_advertising(self):
         try:
@@ -549,15 +539,21 @@ class Keyboard:
         shift_pressed = 0
         ctrl_pressed = 0
 
+        t = 0
         while True:
             t = 20 if self.backlight.check() or mouse_action else 1000
-            t_log = monotonic()
-            n = matrix.wait(t)
+            t_log = monotonic()  # Time in nanoseconds
+            n = 0
+            #while n == 0 and monotonic()-t_log < t*1000000:
+            #    sleep(0.001) # Maybe this saves a little bit of battery? who knows.
+            #    n = matrix.wait(t) # This should block? This is a tight loop when no button is pressed
+            n = matrix.wait(t) # This should block? This is a tight loop when no button is pressed
             self.check()
 
             if _ENABLE_BACKLIGHT_TIMEOUT and n > 0:
                 # Key was pressed, update the backlight timer
-                self.backlight_timeout = time.time()
+                self.backlight_timeout = time.monotonic()
+                self._check_light_sensor(self.backlight_timeout)
                 self._backlight_on()
 
             if self.pair_keys:
@@ -569,8 +565,7 @@ class Keyboard:
                             self.pair_delay
                             - ms(matrix.time() - matrix.get_keydown_time(key))
                         )
-
-                if n >= 2:
+                elif n >= 2:
                     pair = {matrix.view(0), matrix.view(1)}
                     if pair in self.pairs:
                         pair_index = self.pairs.index(pair)
@@ -781,3 +776,4 @@ class Keyboard:
                 dt = 1 + (time.monotonic_ns() - mouse_time) // 8000000
                 mouse_time = time.monotonic_ns()
                 self.move_mouse(x * dt, y * dt, wheel * dt)
+                
