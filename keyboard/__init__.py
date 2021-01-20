@@ -113,7 +113,6 @@ class Keyboard:
             print("Refresh period: ", self.light_sensor_period)
             self.light_sensor_thresh = const(1)
             self.lux = self.light_sensor.lux
-            print(self.lux)
 
         self.uid = microcontroller.cpu.uid * 2
         self.usb_status = 0
@@ -161,7 +160,7 @@ class Keyboard:
 
         self.light_sensor_time = t
         self.lux = self.light_sensor.lux
-        print("Lux: {}".format(self.lux))
+        #print("Lux: {}".format(self.lux))
 
     def _check_backlight_timeout(self, t):
         """ Turns off backlight if keyboard hasn't had an input in a while.
