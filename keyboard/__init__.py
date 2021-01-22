@@ -111,7 +111,8 @@ class Keyboard:
             self.light_sensor_time = t
             self.light_sensor_period =  self.light_sensor.refresh_time / 1000
             print("Refresh period: ", self.light_sensor_period)
-            self.light_sensor_thresh = const(1)
+            self.light_sensor_thresh_low = const(1)
+            self.light_sensor_thresh_high = const(2)
             self.lux = self.light_sensor.lux
 
         self.uid = microcontroller.cpu.uid * 2
@@ -170,9 +171,9 @@ class Keyboard:
 
         if t < self.backlight_timeout + self.backlight_timeout_period:
             if _ENABLE_LIGHT_SENSOR:
-                if self.lux > self.light_sensor_thresh:
+                if self.lux > self.light_sensor_thresh_high:
                     self._backlight_off()
-                else:
+                elif self.lux < self.light_sensor_thresh_low:
                     self._backlight_on()
             return
 
@@ -188,7 +189,7 @@ class Keyboard:
         if self.backlight.enabled:
             # Already on, no need to send I2C commands
             return
-        if _ENABLE_LIGHT_SENSOR and self.lux > self.light_sensor_thresh:
+        if _ENABLE_LIGHT_SENSOR and self.lux > self.light_sensor_thresh_high:
             # Don't turn on lights in bright environement
             return
         self.backlight.enabled = True
