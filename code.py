@@ -13,6 +13,7 @@ MACRO_RGB_VAL_DEC = const(7)
 MACRO_IPDB = const(8)
 MACRO_TEST = const(9)
 MACRO_SUSPEND_SHUTDOWN = const(10)
+MACRO_PLT = const(11)
 
 keyboard = Keyboard()
 
@@ -37,7 +38,7 @@ keyboard.keymap = (
         '`',  F1,      F2,      F3,   F4,   F5,   F6,   F7,    F8,    F9,    F10,  F11, F12, DEL,
         ___, MACRO(MACRO_REPL),     ___,     ___, BOOT,  ___,  ___, PGUP,    UP,  PGDN, MACRO(MACRO_IPDB),  ___, ___, ___,
         ___, ___,   VOLDN,   VOLUP, MUTE, ___, HOME, LEFT,  DOWN, RIGHT, INSERT,  ___,      ___,
-        ___, ___, BRGHTDN, BRGHTUP, ___,  MACRO(MACRO_BATT),  END,  ___,   ___,   ___,    ___, ___,
+        ___, ___, BRGHTDN, BRGHTUP, ___,  MACRO(MACRO_BATT),  END,  MACRO(MACRO_PLT),   ___,   ___,    ___, ___,
         ___, ___,   ___,                   ___,                     ___,   ___,   ___,      ___
     ),
 
@@ -167,6 +168,13 @@ def macro_handler_suspend_shutdown(dev, is_down, shift, ctrl):
         print("Suspending...")
         dev.suspend()
     
+def macro_handler_plt(dev, is_down, shift, ctrl):
+    if not is_down:
+        return
+    dev.send_text("import matplotlib.pyplot as plt\n")
+    dev.send_text("plt.imshow(); plt.show()")
+    for _ in range(13):
+        dev.send(LEFT)
 
 def macro_handler(dev, n, is_down, shift, ctrl):
     """
@@ -196,6 +204,7 @@ def macro_handler(dev, n, is_down, shift, ctrl):
                 MACRO_IPDB: macro_handler_ipdb,
                 MACRO_TEST: macro_handler_test,
                 MACRO_SUSPEND_SHUTDOWN: macro_handler_suspend_shutdown,
+                MACRO_PLT: macro_handler_plt,
             }
 
     handler = macro_lookup.get(n)
