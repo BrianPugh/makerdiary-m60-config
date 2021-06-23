@@ -157,6 +157,11 @@ def macro_handler_suspend_shutdown(dev, is_down, shift, ctrl):
         return
     if shift:
         print("Shutting Down...")
+        dev.backlight.off()
+        dev.backlight.on(r=0xFF, g=0x00, b=0x00)
+        sleep(1.0)
+        dev.backlight.off()
+
         microcontroller.reset()
     else:
         print("Suspending...")
